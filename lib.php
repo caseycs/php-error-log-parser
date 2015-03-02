@@ -4,34 +4,35 @@ class PhpLogParser
     public function run(
         $logPath, 
         $temporaryDir,
-        \Closure $sendErrorsCallback,
-        $pollDelay = 1,
-        $retryDelay = 1,
-        $numRetries = 3
+        $pollDelay = 1
     ) {
         //cast
         $pollDelay = $pollDelay * 1000000; //to milliseconds
-        $retryDelay = $retryDelay * 1000000; //to milliseconds
 
-        //bricks
         $parseLogFile = $this->parseLogFile();
-        $sendErrors = $this->sendErrors($sendErrorsCallback, $numRetries, $retryDelay);
 
-        //combine
-        $deliverLogFile = $this->deliveryLogFile($parseLogFile, $sendErrors);
+        echo "old files" . PHP_EOL;
+        $processOldLogFiles = $this->processOldLogFiles();
+        foreach ($processOldLogFiles($temporaryDir) as $file) {
+            foreach ($parseLogFile($file) as $errorsArray) {
+                yield $errorsArray;
+                // unlink ($file);
+            }
+        }
 
-        // echo "current files" . PHP_EOL;
-        $func = $this->processOldLogFiles();
-        $func($temporaryDir, $deliverLogFile);
-
-        // echo "new files" . PHP_EOL;
-        $func = $this->loopOnNewFile();
-        $func($logPath, $temporaryDir, $pollDelay, $deliverLogFile);
+        echo "new files" . PHP_EOL;
+        $loopOnNewFile = $this->loopOnNewFile();
+        foreach ($loopOnNewFile($logPath, $temporaryDir, $pollDelay) as $file) {
+            foreach ($parseLogFile($file) as $errorsArray) {
+                yield $errorsArray;
+                // unlink ($file);
+            }
+        }
     }
 
     protected function processOldLogFiles()
     {
-        return function($temporaryDir, \Closure $callback) {
+        return function($temporaryDir) {
             echo 'old log file' . PHP_EOL;
             if (!is_dir($temporaryDir) || !is_readable($temporaryDir)) {
                 throw new \LogicException;
@@ -43,14 +44,14 @@ class PhpLogParser
                 if (!is_file($result) || !is_readable($result)) {
                     throw new \LogicException;
                 }
-                $callback($result);
+                yield $result;
             }
         };
     }
 
     protected function loopOnNewFile()
     {
-        return function($filepath, $temporaryDir, $usleep, \Closure $callback) {
+        return function($filepath, $temporaryDir, $usleep) {
             echo 'move log file' . PHP_EOL;
             if (!is_dir($temporaryDir) || !is_writeable($temporaryDir)) {
                 throw new \LogicException;
@@ -67,21 +68,12 @@ class PhpLogParser
                         if (!rename($filepath, $newPath)) {
                             throw new \LogicException;
                         }
-                        $callback($newPath);
                         echo (memory_get_usage(true)/1024) . 'K' . PHP_EOL;
+                        yield $newPath;
                     }
                 }
                 usleep($usleep);
             }
-        };
-    }
-
-    protected function deliveryLogFile(\Closure $parseLogFile, \Closure $sendErrors)
-    {
-        return function($logFile) use ($parseLogFile, $sendErrors) {
-            $errors = $parseLogFile($logFile);
-            $sendErrors($errors);
-            unlink ($logFile);
         };
     }
 
@@ -103,29 +95,8 @@ class PhpLogParser
                 // print_R([$timeObj, $msg]);
             }
 
-            return $errorsOutput;
+            yield $errorsOutput;
         };
     }
 
-    protected function sendErrors(\Closure $sendErrorsCallback, $retriesCount, $retryDelay)
-    {
-        return function(array $errors) use ($sendErrorsCallback, $retriesCount, $retryDelay) {
-            echo 'deliver' . PHP_EOL;
-            if (array() === $errors) {
-                throw new \LogicException;
-            }
-
-            do {
-                if ($sendErrorsCallback($errors)) {
-                    echo "delivered " . count($errors) . ' errors' . PHP_EOL;
-                    return true;
-                }
-                echo "delivered failed, usleep 1 sec" . PHP_EOL;
-                usleep($retryDelay);
-                $retriesCount --;
-            } while ($retriesCount > 0);
-
-            throw new \Exception("deliver failed after {$sendRetries} replies");
-        };
-    }
 }
