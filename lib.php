@@ -14,18 +14,16 @@ class PhpLogParser
         echo "old files" . PHP_EOL;
         $processOldLogFiles = $this->processOldLogFiles();
         foreach ($processOldLogFiles($temporaryDir) as $file) {
-            foreach ($parseLogFile($file) as $errorsArray) {
-                yield $errorsArray;
-                // unlink ($file);
+            foreach ($parseLogFile($file) as $errors) {
+                yield $errors;
             }
         }
 
         echo "new files" . PHP_EOL;
         $loopOnNewFile = $this->loopOnNewFile();
         foreach ($loopOnNewFile($logPath, $temporaryDir, $pollDelay) as $file) {
-            foreach ($parseLogFile($file) as $errorsArray) {
-                yield $errorsArray;
-                // unlink ($file);
+            foreach ($parseLogFile($file) as $errors) {
+                yield $errors;
             }
         }
     }
@@ -80,7 +78,7 @@ class PhpLogParser
     protected function parseLogFile()
     {
         return function($filepath) {
-            echo 'parse' . PHP_EOL;
+            echo 'parse ' . $filepath . PHP_EOL;
             if (!is_file($filepath) || !is_readable($filepath)) {
                 throw new \LogicException;
             }
@@ -90,11 +88,9 @@ class PhpLogParser
             $errorsOutput = [];
             foreach ($matches[1] as $k => $time) {
                 $msg = $matches[2][$k];
-                $timeObj = strtotime($time);
-                $errorsOutput[] = [$timeObj, $msg];
-                // print_R([$timeObj, $msg]);
+                $time = strtotime($time);
+                $errorsOutput[] = [$time, $msg];
             }
-
             yield $errorsOutput;
         };
     }

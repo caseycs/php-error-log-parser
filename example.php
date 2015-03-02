@@ -7,6 +7,7 @@ $temporaryDir = '/tmp/php_errors';
 $phpLogParser = new PhpLogParser;
 foreach ($phpLogParser->run($log, $temporaryDir, 1) as $errors) {
     print_r($errors);
+    echo 'PIECE END' . PHP_EOL;
 }
 
 // protected function sendErrors(\Closure $sendErrorsCallback, $retriesCount, $retryDelay)
