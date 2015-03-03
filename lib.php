@@ -1,31 +1,60 @@
 <?php
 class PhpLogParser
 {
-    public function run(
+    public function __construct(
         $logPath, 
         $temporaryDir,
         $pollDelay = 1
     ) {
-        //cast
-        $pollDelay = $pollDelay * 1000000; //to milliseconds
+        $this->logPath = $logPath;
+        $this->temporaryDir = $temporaryDir;
+        $this->pollDelay = $pollDelay * 1000000; //to milliseconds
+    }
 
-        $parseLogFile = $this->parseLogFile();
+    public function start(\Closure $deliverErrorsCallback) {
+        $fileProcessorF = $this->fileProcessor();
+        $logParserF = $this->logParser();
+
+        $fileProcessor = $fileProcessorF();
+        $logParser = $logParserF();
+
+        $processFile = function($filename) use ($fileProcessor, $logParser, $deliverErrorsCallback) {
+            $fileContents = $fileProcessor->send($filename);
+            $errors = $logParser->send($fileContents);
+            if (!$deliverErrorsCallback($errors)) {
+                throw new \LogicException;
+            }
+            if (!unlink($filename)) {
+                throw new \LogicException;
+            }
+        };
 
         echo "old files" . PHP_EOL;
         $processOldLogFiles = $this->processOldLogFiles();
-        foreach ($processOldLogFiles($temporaryDir) as $file) {
-            foreach ($parseLogFile($file) as $errors) {
-                yield $errors;
-            }
+        foreach ($processOldLogFiles($this->temporaryDir) as $file) {
+            $processFile($file);
         }
 
         echo "new files" . PHP_EOL;
         $loopOnNewFile = $this->loopOnNewFile();
-        foreach ($loopOnNewFile($logPath, $temporaryDir, $pollDelay) as $file) {
-            foreach ($parseLogFile($file) as $errors) {
-                yield $errors;
-            }
+        foreach ($loopOnNewFile($this->logPath, $this->temporaryDir, $this->pollDelay) as $file) {
+            $processFile($file);
         }
+    }
+
+    protected function fileProcessor()
+    {
+        return function() {
+            $filename = yield;
+            while (true) {
+                if (!is_file($filename) || !is_readable($filename)) {
+                    throw new \LogicException;
+                }
+                $filename2remove = $filename;
+                $result = file_get_contents($filename);
+                $filename = (yield $result);
+            }
+        };
     }
 
     protected function processOldLogFiles()
@@ -75,23 +104,20 @@ class PhpLogParser
         };
     }
 
-    protected function parseLogFile()
+    protected function logParser()
     {
-        return function($filepath) {
-            echo 'parse ' . $filepath . PHP_EOL;
-            if (!is_file($filepath) || !is_readable($filepath)) {
-                throw new \LogicException;
+        return function() {
+            $content = yield;
+            while (true) {
+                $errors = preg_match_all('/\[(\d\d-\w{3}-\d{4}\s+\d\d:\d\d:\d\d\ [\w\/]*?)] (.+)/', $content, $matches);
+                $errorsOutput = [];
+                foreach ($matches[1] as $k => $time) {
+                    $msg = $matches[2][$k];
+                    $time = strtotime($time);
+                    $errorsOutput[] = [$time, $msg];
+                }
+                $content = (yield $errorsOutput);
             }
-
-            $content = file_get_contents($filepath);
-            $errors = preg_match_all('/\[(\d\d-\w{3}-\d{4}\s+\d\d:\d\d:\d\d\ [\w\/]*?)] (.+)/', $content, $matches);
-            $errorsOutput = [];
-            foreach ($matches[1] as $k => $time) {
-                $msg = $matches[2][$k];
-                $time = strtotime($time);
-                $errorsOutput[] = [$time, $msg];
-            }
-            yield $errorsOutput;
         };
     }
 

@@ -7,9 +7,11 @@ if (function_exists('xdebug_disable')) {
 }
 
 //prepare dir
-mkdir('/tmp/php_errors');
+if (!file_exists('/tmp/php_errors')) {
+    mkdir('/tmp/php_errors');
+}
 
 //generate errors
-for ($i = 0; $i < 100; $i ++) {
+for ($i = 0; $i < 2; $i ++) {
     echo $a;
 }
