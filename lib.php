@@ -50,7 +50,6 @@ class PhpLogParser
                 if (!is_file($filename) || !is_readable($filename)) {
                     throw new \LogicException;
                 }
-                $filename2remove = $filename;
                 $result = file_get_contents($filename);
                 $filename = (yield $result);
             }
