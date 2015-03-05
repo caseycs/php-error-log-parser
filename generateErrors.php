@@ -1,7 +1,7 @@
 <?php
 error_reporting(-1);
 ini_set('display_errors', true);
-ini_set('error_log', '/tmp/php_errors.log');
+ini_set('error_log', '/var/log/php_errors.log');
 if (function_exists('xdebug_disable')) {
     xdebug_disable();
 }
