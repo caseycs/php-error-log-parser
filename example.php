@@ -1,8 +1,8 @@
 <?php
 require 'lib.php';
 
-$log = '/tmp/php_errors.log';
-$temporaryDir = '/tmp/php_errors';
+$log = '/tmp/php_error.log';
+$temporaryDir = '/tmp/php_error';
 
 $sendErrors = function(array $errors) {
     print_r($errors);

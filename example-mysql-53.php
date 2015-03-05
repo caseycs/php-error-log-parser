@@ -3,8 +3,8 @@ error_reporting(-1);
 ini_set('display_errors', true);
 
 //get env
-$log = getenv('LOG') ?: '/var/log/php_errors.log';
-$logTemporaryDir = getenv('LOG_TEMPORARY_DIR') ?: '/tmp/php_errors';
+$log = getenv('LOG') ?: '/tmp/php_error.log';
+$logTemporaryDir = getenv('LOG_TEMPORARY_DIR') ?: '/tmp/php_error';
 $host = getenv('MYSQL_HOST') ?: 'localhost';
 $port = getenv('MYSQL_PORT') ?: 3306;
 $user = getenv('MYSQL_USER') ?: 'root';
