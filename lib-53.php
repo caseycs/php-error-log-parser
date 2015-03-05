@@ -98,7 +98,7 @@ class PhpLogParser53
         foreach ($matches[1] as $k => $time) {
             $msg = $matches[2][$k];
             $time = strtotime($time);
-            $errorsOutput[] = [$time, $msg];
+            $errorsOutput[] = array($time, $msg);
         }
         self::log('log parsed, errors found: ' . count($errorsOutput));
         return $errorsOutput;
