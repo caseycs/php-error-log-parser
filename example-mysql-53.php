@@ -35,8 +35,8 @@ foreach (array_keys($extraFields) as $column) {
 }
 $sql = "INSERT INTO {$table} SET " . join(', ', $sqlColumns);
 $sth = $dbh->prepare($sql);
-foreach ($extraFields as $column => $value) {
-    $sth->bindParam(':' . $column, $value);
+foreach (array_keys($extraFields) as $column) {
+    $sth->bindParam(':' . $column, $extraFields[$column]);
 }
 
 $datetime = $message = null;
