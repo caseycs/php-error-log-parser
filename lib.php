@@ -22,10 +22,10 @@ class PhpLogParser
             $fileContents = $fileProcessor->send($filename);
             $errors = $logParser->send($fileContents);
             if (!$deliverErrorsCallback($errors)) {
-                throw new \LogicException;
+                throw new \Exception('deliver errors failed');
             }
             if (!unlink($filename)) {
-                throw new \LogicException;
+                throw new \Exception('remove error log file failed: ' . $filename);
             }
         };
 
@@ -48,7 +48,7 @@ class PhpLogParser
             $filename = yield;
             while (true) {
                 if (!is_file($filename) || !is_readable($filename)) {
-                    throw new \LogicException;
+                    throw new \Exception('file does not exists or is not readable:' . $filename);
                 }
                 $result = file_get_contents($filename);
                 $filename = (yield $result);
@@ -61,14 +61,14 @@ class PhpLogParser
         return function($temporaryDir) {
             echo 'old log file' . PHP_EOL;
             if (!is_dir($temporaryDir) || !is_readable($temporaryDir)) {
-                throw new \LogicException;
+                throw new \Exception('temporary dir does not exists or not readable:' . $temporaryDir);
             }
 
             $it = new FilesystemIterator($temporaryDir);
             foreach ($it as $fileinfo) {
                 $result = $fileinfo->getPathname();
                 if (!is_file($result) || !is_readable($result)) {
-                    throw new \LogicException;
+                    throw new \Exception('file does not exists or is not readable:' . $result);
                 }
                 yield $result;
             }
@@ -80,19 +80,19 @@ class PhpLogParser
         return function($filepath, $temporaryDir, $usleep) {
             echo 'move log file' . PHP_EOL;
             if (!is_dir($temporaryDir) || !is_writeable($temporaryDir)) {
-                throw new \LogicException;
+                throw new \Exception('temporary dir is not writeable:' . $temporaryDir);
             }
 
             while (true) {
                 if (is_file($filepath)) {
                     if (!is_readable($filepath)) {
-                        throw new \LogicException;
+                        throw new \Exception('log file is not readable:' . $filepath);
                     }
 
                     if (filesize($filepath)) {
                         $newPath = $temporaryDir . '/' . time();
                         if (!rename($filepath, $newPath)) {
-                            throw new \LogicException;
+                            throw new \Exception("log file rename failed: {$filepath} -> {$newPath}");
                         }
                         echo (memory_get_usage(true)/1024) . 'K' . PHP_EOL;
                         yield $newPath;
