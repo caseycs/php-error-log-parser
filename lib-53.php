@@ -21,8 +21,12 @@ class PhpLogParser53
 
     protected function checkTemporaryDir()
     {
-        if (!is_dir($this->temporaryDir) || !is_readable($this->temporaryDir)) {
-            throw new \Exception('temporary dir does not exists or not readable:' . $this->temporaryDir);
+        if (is_dir($this->temporaryDir)) {
+            if (!is_readable($this->temporaryDir)) {
+                throw new \Exception('temporary dir does not exists or not readable:' . $this->temporaryDir);
+            }
+        } elseif (!mkdir($this->temporaryDir)) {
+            throw new \Exception('failed to create temporary dir:' . $this->temporaryDir);
         }
     }
 
