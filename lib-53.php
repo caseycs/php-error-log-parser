@@ -97,7 +97,7 @@ class PhpLogParser53
 
     protected function parseLog($content)
     {
-        $errors = preg_match_all('/\[(\d\d-\w{3}-\d{4}\s+\d\d:\d\d:\d\d\ [\w\/]*?)] (.+)/', $content, $matches);
+        $errors = preg_match_all('/\[(\d\d-\w{3}-\d{4}\s+\d\d:\d\d:\d\d\ [\w\/]*?)] (.+)/s', $content, $matches);
         $errorsOutput = array();
         foreach ($matches[1] as $k => $time) {
             $msg = $matches[2][$k];
