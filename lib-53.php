@@ -58,9 +58,10 @@ class PhpLogParser53
 
                 if (filesize($this->logPath)) {
                     $newPath = $this->temporaryDir . '/' . time() . '_' . uniqid();
-                    self::log("going to rename: {$this->logPath} -> {$newPath}");
-                    if (!rename($this->logPath, $newPath)) {
-                        throw new \Exception("rename failed");
+                    if (rename($this->logPath, $newPath)) {
+                        self::log("rename success: {$this->logPath} -> {$newPath}");
+                } else { 
+                        throw new \Exception("rename failed: {$this->logPath} -> {$newPath}");
                     }
 
                     $content = $this->readFile($newPath);
@@ -89,18 +90,21 @@ class PhpLogParser53
 
     protected function unlink($filename)
     {
-        self::log('going to unlink: ' . $filename);
-        if (!unlink($filename)) {
+        if (unlink($filename)) {
+            self::log('file deleted successfully: ' . $filename);
+        } else {
             throw new \Exception('remove error log file failed: ' . $filename);
         }
     }
 
     protected function parseLog($content)
     {
-        $errors = preg_match_all('/\[(\d\d-\w{3}-\d{4}\s+\d\d:\d\d:\d\d\ [\w\/]*?)] (.+)/s', $content, $matches);
+        $pattern = '/\[(\d\d-\w{3}-\d{4}\s+\d\d:\d\d:\d\d\ [\w\/]*?)] /';
+        $flags = PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY;
+        $matches = preg_split($pattern, $content, -1, $flags);
+
         $errorsOutput = array();
-        foreach ($matches[1] as $k => $time) {
-            $msg = $matches[2][$k];
+        while (($msg = array_pop($matches)) && ($time = array_pop($matches))) {
             $time = strtotime($time);
             $errorsOutput[] = array($time, $msg);
         }
@@ -110,7 +114,6 @@ class PhpLogParser53
 
     protected function sendErrors(array $errors)
     {
-        self::log('going to send errors');
         $callback = $this->deliverErrorsCallback;
         if ($callback($errors)) {
             self::log('errors inserted successfully');

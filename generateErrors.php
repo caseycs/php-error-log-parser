@@ -1,14 +1,14 @@
 <?php
 error_reporting(-1);
 ini_set('display_errors', true);
-ini_set('error_log', '/var/log/php_errors.log');
+ini_set('error_log', __DIR__ . '/php_error.log');
 if (function_exists('xdebug_disable')) {
     xdebug_disable();
 }
 
 //prepare dir
-if (!file_exists('/tmp/php_errors')) {
-    mkdir('/tmp/php_errors');
+if (!file_exists('/tmp/php_error')) {
+    mkdir('/tmp/php_error');
 }
 
 //generate errors
