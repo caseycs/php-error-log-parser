@@ -5,45 +5,33 @@ class PhpLogParser53
         $logPath, 
         $temporaryDir,
         \Closure $deliverErrorsCallback,
-        $pollDelay = 1
+        $pollDelay = 1,
+        $keepLogDir = null
     ) {
         $this->logPath = $logPath;
         $this->temporaryDir = $temporaryDir;
         $this->pollDelay = $pollDelay * 1000000; //to milliseconds
         $this->deliverErrorsCallback = $deliverErrorsCallback;
+        $this->keepLogDir = $keepLogDir;
     }
 
     public function start() {
-        $this->checkTemporaryDir();
         $this->processOldLogFiles();
         $this->loopOnNewFile();
-    }
-
-    protected function checkTemporaryDir()
-    {
-        if (is_dir($this->temporaryDir)) {
-            if (!is_readable($this->temporaryDir)) {
-                throw new \Exception('temporary dir does not exists or not readable:' . $this->temporaryDir);
-            }
-        } elseif (!mkdir($this->temporaryDir)) {
-            throw new \Exception('failed to create temporary dir:' . $this->temporaryDir);
-        }
     }
 
     protected function processOldLogFiles()
     {
         self::log('process old log files');
+        $this->prepareDir($this->temporaryDir);
         $it = new FilesystemIterator($this->temporaryDir);
         foreach ($it as $fileinfo) {
-            $result = $fileinfo->getPathname();
-            if (!is_file($result) || !is_readable($result)) {
-                throw new \Exception('file does not exists or is not readable:' . $result);
-            }
+            $filepath = $fileinfo->getPathname();
 
-            $content = $this->readFile($result);
+            $content = $this->readFile($filepath);
             $errors = $this->parseLog($content);
             $this->sendErrors($errors);
-            $this->unlink($result);
+            $this->unlinkProcessedLog($filepath);
         }
     }
 
@@ -57,24 +45,33 @@ class PhpLogParser53
                 }
 
                 if (filesize($this->logPath)) {
-                    $newPath = $this->temporaryDir . '/' . time() . '_' . uniqid();
-                    if (rename($this->logPath, $newPath)) {
-                        self::log("rename success: {$this->logPath} -> {$newPath}");
-                } else { 
-                        throw new \Exception("rename failed: {$this->logPath} -> {$newPath}");
-                    }
+                    $newName = date('Y-m-d_H-i-s') . '_' . microtime(true);
+                    $newPath = $this->temporaryDir . '/' . $newName;
+
+                    $this->rename($this->logPath, $this->temporaryDir, $newName);
 
                     $content = $this->readFile($newPath);
                     $errors = $this->parseLog($content);
                     unset($content);
                     $this->sendErrors($errors);
                     unset($errors);
-                    $this->unlink($newPath);
+                    $this->unlinkProcessedLog($newName);
 
                     self::log('memory usage ' . (memory_get_usage(true)/1024) . 'K');
                 }
             }
             usleep($this->pollDelay);
+        }
+    }
+
+    protected function prepareDir($dir)
+    {
+        if (is_dir($dir)) {
+            if (!is_readable($dir)) {
+                throw new \Exception('Directory does not exists or not readable:' . $dir);
+            }
+        } elseif (!mkdir($dir)) {
+            throw new \Exception('failed to create directory:' . $dir);
         }
     }
 
@@ -85,15 +82,35 @@ class PhpLogParser53
         }
         self::log('read file ' . $filename);
         $result = file_get_contents($filename);
+        if (false === $result) {
+            throw new \Exception('file_get_contents failed:' . $filename);
+        }
         return $result;
     }
 
-    protected function unlink($filename)
+    protected function unlinkProcessedLog($filename)
     {
-        if (unlink($filename)) {
-            self::log('file deleted successfully: ' . $filename);
+        if ($this->keepLogDir) {
+            $this->prepareDir($this->keepLogDir);
+            $this->rename($this->temporaryDir . '/' . $filename, $this->keepLogDir, $filename);
         } else {
-            throw new \Exception('remove error log file failed: ' . $filename);
+            if (unlink($this->temporaryDir . '/' . $filename)) {
+                self::log('file deleted successfully: ' . $filename);
+            } else {
+                throw new \Exception('remove error log file failed: ' . $filename);
+            }
+        }
+    }
+
+    protected function rename($pathFrom, $dirTo, $nameTo)
+    {
+        $this->prepareDir($dirTo);
+        $to = $dirTo . '/' . $nameTo;
+
+        if (rename($pathFrom, $to)) {
+            self::log("rename success: {$pathFrom} -> {$to}");
+        } else {
+            throw new \Exception("rename failed: {$pathFrom} -> {$to}");
         }
     }
 
@@ -124,7 +141,6 @@ class PhpLogParser53
 
     public static function log($message)
     {
-        echo date('[Y-m-d H:i:s] ') . $message . PHP_EOL;
+        echo date('[Y-m-d H:i:s]') . ' ' . $message . PHP_EOL;
     }
-
 }

@@ -5,6 +5,8 @@ ini_set('display_errors', true);
 //get env
 $log = getenv('LOG') ?: '/tmp/php_error.log';
 $logTemporaryDir = getenv('LOG_TEMPORARY_DIR') ?: '/tmp/php_error';
+$keepLogDir = getenv('KEEP_LOG_DIR') ?: '/tmp/php_error_keep';
+
 $host = getenv('MYSQL_HOST') ?: 'localhost';
 $port = getenv('MYSQL_PORT') ?: 3306;
 $user = getenv('MYSQL_USER') ?: 'root';
@@ -55,5 +57,5 @@ $sendErrors = function(array $errors) use ($sth, &$datetime, &$message) {
 
 //run
 require 'lib-53.php';
-$a = new PhpLogParser53($log, $logTemporaryDir, $sendErrors, 1);
+$a = new PhpLogParser53($log, $logTemporaryDir, $sendErrors, 1, $keepLogDir);
 $a->start();
