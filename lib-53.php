@@ -5,7 +5,7 @@ class PhpLogParser53
         $logPath, 
         $temporaryDir,
         \Closure $deliverErrorsCallback,
-        $pollDelay = 1,
+        $pollDelay = 2,
         $keepLogDir = null
     ) {
         $this->logPath = $logPath;
@@ -16,8 +16,12 @@ class PhpLogParser53
     }
 
     public function start() {
-        $this->processOldLogFiles();
-        $this->loopOnNewFile();
+        try {
+            $this->processOldLogFiles();
+            $this->loopOnNewFile();
+        } catch (\Exception $e) {
+            $this->log('ERROR ' . $e->getMessage());
+        };
     }
 
     protected function processOldLogFiles()
@@ -45,7 +49,7 @@ class PhpLogParser53
                 }
 
                 if (filesize($this->logPath)) {
-                    $newName = date('Y-m-d_H-i-s') . '_' . microtime(true);
+                    $newName = date('Y-m-d_H-i-s');
                     $newPath = $this->temporaryDir . '/' . $newName;
 
                     $this->rename($this->logPath, $this->temporaryDir, $newName);
@@ -94,10 +98,10 @@ class PhpLogParser53
             $this->prepareDir($this->keepLogDir);
             $this->rename($this->temporaryDir . '/' . $filename, $this->keepLogDir, $filename);
         } else {
-            if (unlink($this->temporaryDir . '/' . $filename)) {
+            if (@unlink($this->temporaryDir . '/' . $filename)) {
                 self::log('file deleted successfully: ' . $filename);
             } else {
-                throw new \Exception('remove error log file failed: ' . $filename);
+                throw new \Exception('unlink failed: ' . $filename);
             }
         }
     }
@@ -107,7 +111,7 @@ class PhpLogParser53
         $this->prepareDir($dirTo);
         $to = $dirTo . '/' . $nameTo;
 
-        if (rename($pathFrom, $to)) {
+        if (@rename($pathFrom, $to)) {
             self::log("rename success: {$pathFrom} -> {$to}");
         } else {
             throw new \Exception("rename failed: {$pathFrom} -> {$to}");

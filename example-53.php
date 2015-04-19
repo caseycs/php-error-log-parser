@@ -14,5 +14,5 @@ $sendErrors = function(array $errors) {
 
 //run
 require 'lib-53.php';
-$a = new PhpLogParser53($log, $logTemporaryDir, $sendErrors, 1, $keepLogsDir);
+$a = new PhpLogParser53($log, $logTemporaryDir, $sendErrors, 2, $keepLogsDir);
 $a->start();
