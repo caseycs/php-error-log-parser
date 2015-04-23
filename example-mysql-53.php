@@ -2,10 +2,10 @@
 error_reporting(-1);
 ini_set('display_errors', true);
 
-//settings - libarary-related
+//settings - library-related
 $log = getenv('LOG') ?: '/tmp/php_error.log';
 $logTemporaryDir = getenv('LOG_TEMPORARY_DIR') ?: '/tmp/php_error';
-$keepLogDir = getenv('KEEP_LOG_DIR') ?: '/tmp/php_error_keep';
+$logKeepDir = getenv('LOG_KEEP_DIR') ?: '/tmp/php_error_keep';
 
 //settings - custom-code related
 $host = getenv('MYSQL_HOST') ?: 'localhost';
@@ -14,15 +14,11 @@ $user = getenv('MYSQL_USER') ?: 'root';
 $password = getenv('MYSQL_PASSWORD') ?: '';
 $database = getenv('MYSQL_DATABASE') ?: 'test';
 $table = getenv('MYSQL_TABLE') ?: 'php_error';
-$extra = getenv('EXTRA_COLUMNS'); //for example host=host1,env=cli
-                                //assumes that host and env columns are presented in mysql table
-
-//parse env
-$extraFields = array();
-if ($extra) {
-    foreach(explode(',', $extra) as $tmp) {
+$extraColumns = array();
+if (getenv('EXTRA_COLUMNS')) {
+    foreach(explode(',', getenv('EXTRA_COLUMNS')) as $tmp) {
         list ($k, $v) = explode('=', $tmp);
-        $extraFields[trim($k)] = trim($v);
+        $extraColumns[trim($k)] = trim($v);
     }
 }
 
@@ -33,13 +29,13 @@ $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 //prepare insert query
 $sqlColumns = array('datetime = :datetime', 'message = :message');
-foreach (array_keys($extraFields) as $column) {
+foreach (array_keys($extraColumns) as $column) {
     $sqlColumns[] = "{$column} = :{$column}";
 }
 $sql = "INSERT INTO {$table} SET " . join(', ', $sqlColumns);
 $sth = $dbh->prepare($sql);
-foreach (array_keys($extraFields) as $column) {
-    $sth->bindParam(':' . $column, $extraFields[$column]);
+foreach (array_keys($extraColumns) as $column) {
+    $sth->bindParam(':' . $column, $extraColumns[$column]);
 }
 
 $datetime = $message = null;
@@ -58,5 +54,5 @@ $sendErrors = function(array $errors) use ($sth, &$datetime, &$message) {
 
 //run
 require 'lib-53.php';
-$phpLogParser53 = new PhpLogParser53($log, $logTemporaryDir, $sendErrors, 2, $keepLogDir);
+$phpLogParser53 = new PhpLogParser53($log, $logTemporaryDir, $sendErrors, 2, $logKeepDir);
 $phpLogParser53->start();
