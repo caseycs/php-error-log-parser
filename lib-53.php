@@ -29,13 +29,14 @@ class PhpLogParser53
         self::log('process old log files');
         $this->prepareDir($this->temporaryDir);
         $it = new FilesystemIterator($this->temporaryDir);
-        foreach ($it as $fileinfo) {
-            $filepath = $fileinfo->getPathname();
+        /** @var SplFileInfo $fileInfo */
+        foreach ($it as $fileInfo) {
+            $filepath = $fileInfo->getPathname();
 
             $content = $this->readFile($filepath);
             $errors = $this->parseLog($content);
             $this->sendErrors($errors);
-            $this->unlinkProcessedLog($filepath);
+            $this->unlinkProcessedLog($fileInfo->getFilename());
         }
     }
 
