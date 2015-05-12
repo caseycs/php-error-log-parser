@@ -11,12 +11,12 @@ CREATE TABLE `php_error` (
   `message` varchar(5000) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
   KEY `datetime` (`datetime`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 ```
 
 Copy and adjust `example-mysql-config.json`, update `error_log` value in `php.ini` corresponding to it.
 
-You can use `flock` and cronjob to deliver daemon-like behaviour in case if any error.
+You can use `flock` and cronjob to deliver auto-recovery in case if any error.
 
 
 ```
