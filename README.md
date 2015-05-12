@@ -1,6 +1,6 @@
 # php-error-log-parser
 
-## How to use in production
+## How to use
 
 Create mysql table:
 
@@ -30,4 +30,4 @@ Here are few ideas:
 * separate servers by `hostname` field in `extra_columns`
 * separate fpm/apache/cli the same way
 * totally custom writer for any storage
-* handle catchable errors, save them in json, parse and separate data in different columns in storage
+* handle all catchable errors, save them in json, parse it in processor, separate data by columns in storage
