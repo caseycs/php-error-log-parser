@@ -6,21 +6,25 @@ Create mysql table:
 
 ```
 CREATE TABLE `php_error` (
-  `datetime` datetime DEFAULT NULL,
-  `host` varchar(32) NOT NULL,
-  `program` varchar(3) NOT NULL,
-  `message` varchar(2048) NOT NULL DEFAULT '',
-  KEY `php_error_datetime_idx` (`datetime`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-```
+  `id` int(10) unsigned NOT NULL,
+  `datetime` datetime NOT NULL,
+  `message` varchar(5000) NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`),
+  KEY `datetime` (`datetime`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;```
 
-Update `error_log` value to `/tmp/php_error_fpm` and `/tmp/php_error_log` in `php.ini`.
-Create `/tmp/php_error_cli` and `/tmp/php_error_fpm` dirs. 
-
-Adjust mysql credentials and install this cronjob for `root` user
+Copy and adjust `example-mysql-config.json`, update `error_log` value in `php.ini` corresponding to it.
+Install cronjob, make sure that all the paths you use are writeable for the cronjob user.
 
 ```
-* * * * * /usr/bin/flock -xn /var/run/php-error-log-parser-cli.lock -c 'LOG=/tmp/php_error_cli.log LOG_TEMPORARY_DIR=/tmp/php_error_cli MYSQL_HOST=127.0.0.1 MYSQL_USER=user MYSQL_PASSWORD=password MYSQL_DATABASE=project EXTRA_COLUMNS=host=www1,program=cli /usr/local/bin/php /root/php-error-log-parser/example-mysql-53.php' >> /var/log/php-error-log-parser-cli.log 2>&1
-
-* * * * * /usr/bin/flock -xn /var/run/php-error-log-parser-fpm.lock -c 'LOG=/tmp/php_error_fpm.log LOG_TEMPORARY_DIR=/tmp/php_error_fpm MYSQL_HOST=127.0.0.1 MYSQL_USER=user MYSQL_PASSWORD=password MYSQL_DATABASE=project EXTRA_COLUMNS=host=www1,program=fpm /usr/local/bin/php /root/php-error-log-parser/example-mysql-53.php' >> /var/log/php-error-log-parser-fpm.log 2>&1
+* * * * * /usr/bin/flock -xn /var/run/php-error-log-parser.lock -c '/usr/local/bin/php /root/php-error-log-parser/example-mysql-53.php /root/php-error-log-parser/example-mysql-config.json' >> /var/log/php-error-log-parser.log 2>&1
 ```
+
+## Advanced usage
+
+Here are few ideas:
+
+* separate servers by `hostname` field in `extra_columns`
+* separate fpm/apache/cli the same way
+* totally custom writer for any storage
+* handle catchable errors, save them in json, parse and separate data in different columns in storage

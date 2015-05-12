@@ -1,0 +1,12 @@
+{
+    "log_file": "/tmp/php_error.log",
+    "tmp_dir": "/tmp/php_error",
+    "db": {
+        "dsn": "mysql:dbname=test;host=localhost;port=3306",
+        "user": "root",
+        "password": "",
+        "table": "php_error"
+    },
+    "extra_columns": {
+    }
+}
