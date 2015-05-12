@@ -11,7 +11,8 @@ CREATE TABLE `php_error` (
   `message` varchar(5000) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
   KEY `datetime` (`datetime`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;```
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+```
 
 Copy and adjust `example-mysql-config.json`, update `error_log` value in `php.ini` corresponding to it.
 Install cronjob, make sure that all the paths you use are writeable for the cronjob user.
