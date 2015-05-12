@@ -6,12 +6,12 @@ Create mysql table:
 
 ```
 CREATE TABLE `php_error` (
-  `id` int(10) unsigned NOT NULL,
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `datetime` datetime NOT NULL,
   `message` varchar(5000) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
   KEY `datetime` (`datetime`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
 ```
 
 Copy and adjust `example-mysql-config.json`, update `error_log` value in `php.ini` corresponding to it.
