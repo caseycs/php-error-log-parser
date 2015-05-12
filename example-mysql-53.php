@@ -23,7 +23,7 @@ if (!$settings) {
 //prepare insert sql
 $sqlColumns = array('datetime = :datetime', 'message = :message');
 foreach ($settings->extra_columns as $column => $value) {
-    $sqlColumns[] = "{$column} = :{$column}";
+    $sqlColumns[] = "{$column} = '{$value}'";
 }
 $sqlColumns = join(', ', $sqlColumns);
 $sql = "INSERT INTO {$settings->db->table} SET {$sqlColumns}";
@@ -35,9 +35,6 @@ $sendErrors = function(array $errors) use ($settings, $sql) {
     $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     $sth = $dbh->prepare($sql);
-    foreach ($settings->extra_columns as $column => $value) {
-        $sth->bindParam(':' . $column, $value);
-    }
 
     $datetime = $message = null;
     $sth->bindParam(':datetime', $datetime);

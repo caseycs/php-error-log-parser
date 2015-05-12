@@ -9,6 +9,8 @@ CREATE TABLE `php_error` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `datetime` datetime NOT NULL,
   `message` varchar(5000) NOT NULL DEFAULT '',
+  `host` varchar(50) NOT NULL DEFAULT '',
+  `env` varchar(10) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
   KEY `datetime` (`datetime`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;

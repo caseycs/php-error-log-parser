@@ -1,6 +1,7 @@
 {
     "log_file": "/tmp/php_error.log",
     "tmp_dir": "/tmp/php_error",
+    "keep_dir": "/tmp/php_error_keep",
     "db": {
         "dsn": "mysql:dbname=test;host=localhost;port=3306",
         "user": "root",
@@ -8,5 +9,7 @@
         "table": "php_error"
     },
     "extra_columns": {
+        "host": "localhost",
+        "env": "cli"
     }
 }
