@@ -15,10 +15,12 @@ CREATE TABLE `php_error` (
 ```
 
 Copy and adjust `example-mysql-config.json`, update `error_log` value in `php.ini` corresponding to it.
-Install cronjob, make sure that all the paths you use are writeable for the cronjob user.
+
+You can use `flock` and cronjob to deliver daemon-like behaviour in case if any error.
+
 
 ```
-* * * * * /usr/bin/flock -xn /var/run/php-error-log-parser.lock -c '/usr/local/bin/php /root/php-error-log-parser/example-mysql-53.php /root/php-error-log-parser/example-mysql-config.json' >> /var/log/php-error-log-parser.log 2>&1
+* * * * * /usr/bin/flock -xn /var/run/php-error-log-parser.lock -c '/usr/local/bin/php /root/php-error-log-parser/example-mysql-53.php /root/php-error-log-parser-config.json' >> /var/log/php-error-log-parser.log 2>&1
 ```
 
 ## Advanced usage
